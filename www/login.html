@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <title>pogonode</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" crossorigin="anonymous">
+        <style>
+            html, body {
+                background-color: #333;
+                color: #eee;
+                font-family: Roboto;
+                margin: 0;
+            }
+            .main {
+                margin-top: 4em;
+                text-align: center;
+                font-size: 3em;
+            }
+            #codeDiv {
+                font-size: 0.7em;
+            }
+            #tokenDiv .tokenTitle {
+                font-size: 0.8em;
+            }
+            #tokenDiv .token {
+                font-size: 0.3em;
+            }
+            #error {
+                font-size: 0.3em;
+                color: crimson;
+            }
+        </style>
+        <script src='https://code.jquery.com/jquery-3.2.1.min.js'></script>
+        <script>
+            function getUrlParameter(sParam) {
+                var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+                    sURLVariables = sPageURL.split('&'),
+                    sParameterName,
+                    i;
+
+                for (i = 0; i < sURLVariables.length; i++) {
+                    sParameterName = sURLVariables[i].split('=');
+
+                    if (sParameterName[0] === sParam) {
+                        return sParameterName[1] === undefined ? true : sParameterName[1];
+                    }
+                }
+            };
+
+            function getToken(config, code) {
+                $.getJSON('/auth/onedrive/token/' + code, function(data) {
+                    console.log(data);
+                    $('#codeDiv').hide();
+                    if (!error) {
+                        $('#tokenDiv').show();
+                        $('#accessToken').text(data.access_token);
+                        $('#refreshToken').text(data.refresh_token);
+                    } else {
+                        $('#error').show();
+                        $('#error').text(data.error_description);
+                    }
+                });
+            }
+
+            function displayLoginUrl(config) {
+                let scope = 'files.read offline_access';
+                let redirect = config.redirectUrl;
+                let url = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${config.appId}&scope=${scope}&response_type=code&redirect_uri=${redirect}`;
+                $('#loginurl').attr('href', url);
+            }
+
+            $(function(){
+                $.getJSON('/config', config => {
+                    let code = getUrlParameter('code');
+                    if (!code) {
+                        displayLoginUrl(config);
+                    } else {
+                        $('#login').hide();
+                        $('#codeDiv').show();
+                        $('#code').text(code);
+                        getToken(config, code);
+                    }
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <div class="container main">
+            <div id="login">
+                <a id='loginurl' href=''>
+                    login
+                </a>
+            </div>
+            <div id="codeDiv" style="display:none">
+                <div id='code'></div>
+            </div>
+            <div id="tokenDiv" style="display:none">
+                <div class="tokenTitle">Access Token</div>
+                <div class="token" id="accessToken"></div>
+                <div class="tokenTitle">Refresh Token</div>
+                <div class="token" id="refreshToken"></div>
+            </div>
+            <div id="error" style="display:none"></div>
+        </div>
+    </body>
+</html>

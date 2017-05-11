@@ -1,0 +1,24 @@
+html, body {
+    background-color: #333;
+    color: #eee;
+    font-family: Roboto;
+    margin: 0;
+}
+.main {
+    margin-top: 4em;
+    text-align: center;
+    font-size: 3em;
+}
+#codeDiv {
+    font-size: 0.7em;
+}
+#tokenDiv .tokenTitle {
+    font-size: 0.8em;
+}
+#tokenDiv .token {
+    font-size: 0.3em;
+}
+#error {
+    font-size: 0.3em;
+    color: crimson;
+}
