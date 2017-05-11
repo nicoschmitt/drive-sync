@@ -9,6 +9,13 @@
             "request": "launch",
             "name": "Launch Program",
             "program": "${workspaceRoot}\\index.js"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "OneDrive Download",
+            "program": "${workspaceRoot}/download/onedrive.js",
+            "cwd": "${workspaceRoot}"
         }
     ]
 }

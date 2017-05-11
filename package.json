@@ -8,6 +8,8 @@
   "dependencies": {
     "dotenv": "^4.0.0",
     "express": "^4.15.2",
+    "lodash": "^4.17.4",
+    "mz": "^2.6.0",
     "nedb": "^1.8.0",
     "nedb-promise": "^2.0.1",
     "request": "^2.81.0",
