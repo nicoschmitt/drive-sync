@@ -53,6 +53,7 @@ module.exports = {
         "vars-on-top": 0,
         "guard-for-in": 0,
         "no-console": 0,
-        "no-await-in-loop": 0
+        "no-await-in-loop": 0,
+        "no-multi-assign": 0
     }
 };

@@ -64,6 +64,8 @@ async function Main() {
         await fs.writeFile('data/' + folder.name + '/' + file.name, content);
     }
 
+    console.log('Done.');
+
     // await Promise.all(
     //     children.map(file => {
     //         if (file.file.mimeType.indexOf('image') >= 0) {
