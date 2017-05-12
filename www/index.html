@@ -13,7 +13,7 @@
                 $.getJSON('/config', config => {
                     console.log(config);
                     if (!config.onedrive.auth) window.location.href = '/auth/onedrive/login';
-                    else if (!config.amazon.auth) window.location.href = '/auth/amazon/login';
+                    //else if (!config.amazon.auth) window.location.href = '/auth/amazon/login';
                 });
             });
         </script>
