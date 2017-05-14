@@ -2,23 +2,9 @@ require('dotenv').config({ silent: true });
 
 const _ = require('lodash');
 const fs = require('mz/fs');
-const Datastore = require('nedb-promise');
 const request = require('request-promise');
 
-const authDb = new Datastore({ filename: 'data/auth.db', autoload: true });
-
-async function getAccessToken(refreshToken) {
-    const url = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
-    const data = {
-        client_id: process.env.MS_APP_ID,
-        redirect_uri: process.env.MS_REDIRECT_URL,
-        client_secret: process.env.MS_APP_SECRET,
-        refresh_token: refreshToken,
-        grant_type: 'refresh_token',
-    };
-    const token = await request.post({ url: url, form: data, json: true });
-    return token.access_token;
-}
+const Auth = require('../auth/onedrive');
 
 async function getFolder(token, path) {
     path = path || 'root';
@@ -39,14 +25,14 @@ async function getAllChildren(token, path) {
 }
 
 async function Main() {
-    const authOneDrive = await authDb.findOne({ type: 'onedrive' });
+    const authOneDrive = await Auth.getAuthFromCache();
     if (!authOneDrive) {
         console.error('No auth found for OneDrive.');
         process.exit(1);
     }
-    const token = await getAccessToken(authOneDrive.auth.refresh_token);
+    const token = await Auth.getAccessToken(authOneDrive.auth.refresh_token);
 
-    const path = 'items/6D3950F38CB09171%21532943';
+    const path = 'items/6D3950F38CB09171%21536783';
     const folder = await getFolder(token, path);
     try {
         await fs.mkdir('data/' + folder.name);
@@ -65,17 +51,6 @@ async function Main() {
     }
 
     console.log('Done.');
-
-    // await Promise.all(
-    //     children.map(file => {
-    //         if (file.file.mimeType.indexOf('image') >= 0) {
-    //             return request.get({ url: file['@microsoft.graph.downloadUrl'], encoding: null })
-    //                     .then(data => fs.writeFile(file.name, data))
-    //                     .then(() => console.log(file.name));
-    //         }
-    //         return true;
-    //     })
-    // );
 }
 
 Main()

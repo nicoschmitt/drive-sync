@@ -25,7 +25,7 @@ exports.register = (DriveSync, app) => {
         };
         try {
             const body = await request.post({ url: url, form: data, json: true });
-            await authDb.insert({ type: 'onedrive', auth: body });
+            await authDb.update({ type: 'onedrive' }, { type: 'onedrive', auth: body }, { upsert: true });
             res.redirect('/');
         } catch (err) {
             console.error(err);
