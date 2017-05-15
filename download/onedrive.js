@@ -14,7 +14,7 @@ async function getFolder(token, path) {
 
 async function getAllChildren(token, path) {
     path = path || 'root';
-    const url = `https://graph.microsoft.com/v1.0/drive/${path}/children`;
+    const url = `https://graph.microsoft.com/v1.0/drive/${path}/children?orderby=lastModifiedDateTime`;
     let data = await request.get(url, { json: true, auth: { bearer: token } });
     let children = data.value;
     while (_.has(data, '@odata.nextLink')) {
@@ -24,7 +24,38 @@ async function getAllChildren(token, path) {
     return children;
 }
 
+async function downloadFolder(token, path, destination) {
+    const folder = await getFolder(token, path);
+
+    let parent = destination + '/' + folder.name;
+    try {
+        await fs.mkdir(parent);
+    } catch (e) { /* already there */ }
+
+    console.log('Download folder ' + folder.name + ' into ' + parent);
+
+    let children = await getAllChildren(token, path);
+    let files = _.filter(children, file => !fs.existsSync(parent + '/' + file.name)
+                                            && file.file
+                                            && file.file.mimeType.indexOf('image') >= 0);
+
+    console.log(files.length + ' files to download.');
+
+    for (const file of files) {
+        console.log(`  ${file.name}...`);
+        const content = await request.get({ url: file['@microsoft.graph.downloadUrl'], encoding: null });
+        await fs.writeFile(parent + '/' + file.name, content);
+    }
+
+    let folders = _.filter(children, dir => dir.folder);
+    for (const dir of folders) {
+        await downloadFolder(token, 'items/' + dir.id, parent);
+    }
+}
+
 async function Main() {
+    console.log('Login...');
+
     const authOneDrive = await Auth.getAuthFromCache();
     if (!authOneDrive) {
         console.error('No auth found for OneDrive.');
@@ -32,23 +63,9 @@ async function Main() {
     }
     const token = await Auth.getAccessToken(authOneDrive.auth.refresh_token);
 
-    const path = 'items/6D3950F38CB09171%21536783';
-    const folder = await getFolder(token, path);
-    try {
-        await fs.mkdir('data/' + folder.name);
-    } catch (e) { /* already there */ }
+    const path = 'items/' + process.env.ONEDRIVE_FOLDER_ID;
 
-    let children = await getAllChildren(token, path);
-    children = _.filter(children, file => !fs.existsSync('data/' + folder.name + '/' + file.name)
-                                            && file.file.mimeType.indexOf('image') >= 0);
-
-    console.log(children.length + ' files to download.');
-
-    for (const file of children) {
-        console.log(file.name + '...');
-        const content = await request.get({ url: file['@microsoft.graph.downloadUrl'], encoding: null });
-        await fs.writeFile('data/' + folder.name + '/' + file.name, content);
-    }
+    await downloadFolder(token, path, 'data');
 
     console.log('Done.');
 }
