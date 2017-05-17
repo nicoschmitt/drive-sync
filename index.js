@@ -10,7 +10,7 @@ const Datastore = require('nedb-promise');
 const DriveSync = {};
 
 const authDb = DriveSync.authDb = new Datastore({ filename: 'data/auth.db', autoload: true });
-const stateDb = DriveSync.stateDb = new Datastore({ filename: 'data/state.db', autoload: true });
+// const stateDb = DriveSync.stateDb = new Datastore({ filename: 'data/state.db', autoload: true });
 
 var app = express();
 const server = https.createServer({

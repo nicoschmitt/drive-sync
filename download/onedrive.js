@@ -29,7 +29,7 @@ async function getAllChildren(token, path) {
 async function downloadFolder(token, path, destination) {
     const folder = await getFolder(token, path);
 
-    let parent = destination + '/' + folder.name;
+    const parent = destination + '/' + folder.name;
     try {
         await fs.mkdir(parent);
     } catch (e) { /* already there */ }
@@ -40,18 +40,18 @@ async function downloadFolder(token, path, destination) {
         return;
     }
 
-    let children = await getAllChildren(token, path);
-    let files = _.filter(children, file => !fs.existsSync(parent + '/' + file.name)
+    const children = await getAllChildren(token, path);
+    const files = _.filter(children, file => !fs.existsSync(parent + '/' + file.name)
                                             && file.file
                                             && file.file.mimeType.indexOf('image') >= 0);
 
     console.log(`  ${files.length} files to download.`);
 
     if (files.length > 0) {
-        let bar = new ProgressBar('[:bar] :current/:total', { total: files.length, width: 30 });
+        const bar = new ProgressBar('[:bar] :current/:total', { total: files.length, width: 30 });
         bar.tick(0);
         for (const file of files) {
-            await retry(async bail => {
+            await retry(async () => {
                 const content = await request.get({ url: file['@microsoft.graph.downloadUrl'], encoding: null });
                 await fs.writeFile(parent + '/' + file.name, content);
                 bar.tick();
@@ -59,7 +59,7 @@ async function downloadFolder(token, path, destination) {
         }
     }
 
-    let folders = _.filter(children, dir => dir.folder);
+    const folders = _.filter(children, dir => dir.folder);
     for (const dir of folders) {
         await downloadFolder(token, 'items/' + dir.id, parent);
     }
