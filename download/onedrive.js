@@ -3,6 +3,8 @@ require('dotenv').config({ silent: true });
 const _ = require('lodash');
 const fs = require('mz/fs');
 const request = require('request-promise');
+const ProgressBar = require('progress');
+const retry = require('async-retry');
 
 const Auth = require('../auth/onedrive');
 
@@ -32,19 +34,29 @@ async function downloadFolder(token, path, destination) {
         await fs.mkdir(parent);
     } catch (e) { /* already there */ }
 
-    console.log('Download folder ' + folder.name + ' into ' + parent);
+    console.log(`Downloading '${folder.name}'...`);
+    if (fs.existsSync(parent + '/skip')) {
+        console.log('  skiping.');
+        return;
+    }
 
     let children = await getAllChildren(token, path);
     let files = _.filter(children, file => !fs.existsSync(parent + '/' + file.name)
                                             && file.file
                                             && file.file.mimeType.indexOf('image') >= 0);
 
-    console.log(files.length + ' files to download.');
+    console.log(`  ${files.length} files to download.`);
 
-    for (const file of files) {
-        console.log(`  ${file.name}...`);
-        const content = await request.get({ url: file['@microsoft.graph.downloadUrl'], encoding: null });
-        await fs.writeFile(parent + '/' + file.name, content);
+    if (files.length > 0) {
+        let bar = new ProgressBar('[:bar] :current/:total', { total: files.length, width: 30 });
+        bar.tick(0);
+        for (const file of files) {
+            await retry(async bail => {
+                const content = await request.get({ url: file['@microsoft.graph.downloadUrl'], encoding: null });
+                await fs.writeFile(parent + '/' + file.name, content);
+                bar.tick();
+            }, { retries: 3 });
+        }
     }
 
     let folders = _.filter(children, dir => dir.folder);
